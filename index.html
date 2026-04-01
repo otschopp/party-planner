@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drink Stock Planner</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0f1117;
+    color: #e0e0e0;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  h1 { text-align: center; font-size: 1.8rem; margin-bottom: 4px; color: #fff; }
+  .subtitle { text-align: center; color: #888; margin-bottom: 28px; font-size: 0.95rem; }
+
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 1100px; margin: 0 auto; }
+  @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } }
+
+  .card {
+    background: #1a1d27;
+    border-radius: 12px;
+    padding: 20px 24px;
+    border: 1px solid #2a2d3a;
+  }
+  .card h2 {
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #aaa;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #2a2d3a;
+    padding-bottom: 8px;
+  }
+
+  .field { margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+  .field label .val {
+    font-weight: 700;
+    color: #7dd3fc;
+    font-size: 1rem;
+    min-width: 40px;
+    text-align: right;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #2a2d3a;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #7dd3fc;
+    cursor: pointer;
+    border: 2px solid #1a1d27;
+  }
+  input[type=number] {
+    width: 70px;
+    background: #2a2d3a;
+    border: 1px solid #3a3d4a;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    text-align: center;
+  }
+  input[type=number]:focus { outline: 1px solid #7dd3fc; }
+
+  .stock-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .stock-row .stock-label { flex: 1; font-size: 0.9rem; }
+  .stock-row .stock-detail { color: #666; font-size: 0.78rem; }
+
+  /* Results */
+  .results-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+  .stat-box {
+    background: #12141c;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    border: 1px solid #2a2d3a;
+  }
+  .stat-box .num { font-size: 1.6rem; font-weight: 800; }
+  .stat-box .lbl { font-size: 0.75rem; color: #888; margin-top: 2px; }
+
+  .verdict-bar {
+    border-radius: 10px;
+    padding: 18px 20px;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .verdict-bar.surplus { background: #0d3320; border: 1px solid #16a34a; color: #4ade80; }
+  .verdict-bar.tight { background: #3b2f09; border: 1px solid #ca8a04; color: #facc15; }
+  .verdict-bar.deficit { background: #3b1111; border: 1px solid #dc2626; color: #f87171; }
+
+  .bar-container { margin-bottom: 8px; }
+  .bar-label { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 3px; }
+  .bar-track { height: 14px; background: #2a2d3a; border-radius: 7px; overflow: hidden; position: relative; }
+  .bar-fill { height: 100%; border-radius: 7px; transition: width 0.3s; }
+  .bar-fill.liquor { background: #a78bfa; }
+  .bar-fill.beer { background: #fbbf24; }
+  .bar-fill.seltzer { background: #34d399; }
+
+  .breakdown { font-size: 0.85rem; color: #999; line-height: 1.7; }
+  .breakdown span { color: #ccc; font-weight: 600; }
+
+  .team-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid #2a2d3a; }
+  .team-row { display: flex; gap: 12px; margin-bottom: 8px; }
+  .team-box {
+    flex: 1;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+  .team-box.red { background: #3b111188; border: 1px solid #dc262666; }
+  .team-box.blue { background: #11223b88; border: 1px solid #2563eb66; }
+  .team-box .team-name { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
+  .team-box.red .team-name { color: #f87171; }
+  .team-box.blue .team-name { color: #60a5fa; }
+  .team-box .team-num { font-size: 1.3rem; font-weight: 800; margin-top: 2px; color: #fff; }
+  .team-box .team-sub { font-size: 0.7rem; color: #888; }
+</style>
+</head>
+<body>
+
+<h1>Drink Stock Planner</h1>
+<p class="subtitle">Competition Edition &mdash; adjust sliders to plan your supply</p>
+
+<div class="layout">
+
+  <!-- LEFT COLUMN -->
+  <div>
+    <div class="card" style="margin-bottom:24px">
+      <h2>Guest &amp; Consumption</h2>
+
+      <div class="field">
+        <label>Total Guests <span class="val" id="v_guests">49</span></label>
+        <input type="range" id="guests" min="5" max="150" value="49" oninput="update()">
+      </div>
+      <div class="field">
+        <label>Heavy Drinkers (%) <span class="val" id="v_heavyPct">50%</span></label>
+        <input type="range" id="heavyPct" min="0" max="100" value="50" oninput="update()">
+      </div>
+      <div class="field">
+        <label>Drinks / Heavy Drinker <span class="val" id="v_heavyDrinks">5</span></label>
+        <input type="range" id="heavyDrinks" min="1" max="15" value="5" oninput="update()">
+      </div>
+      <div class="field">
+        <label>Drinks / Light Drinker <span class="val" id="v_lightDrinks">1</span></label>
+        <input type="range" id="lightDrinks" min="0" max="8" value="1" oninput="update()">
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:24px">
+      <h2>Modifiers</h2>
+
+      <div class="field">
+        <label>Party Duration (hrs) <span class="val" id="v_duration">4</span></label>
+        <input type="range" id="duration" min="1" max="10" step="0.5" value="4" oninput="update()">
+        <div style="font-size:0.75rem;color:#666;margin-top:2px">Baseline = 4 hrs. Longer parties scale demand up.</div>
+      </div>
+      <div class="field">
+        <label>Pregamed (%) <span class="val" id="v_pregame">0%</span></label>
+        <input type="range" id="pregame" min="0" max="100" value="0" oninput="update()">
+        <div style="font-size:0.75rem;color:#666;margin-top:2px">Pregamed guests drink ~30% less on-site.</div>
+      </div>
+      <div class="field">
+        <label>Non-Drinkers (%) <span class="val" id="v_nonDrinkers">0%</span></label>
+        <input type="range" id="nonDrinkers" min="0" max="50" value="0" oninput="update()">
+      </div>
+      <div class="field">
+        <label>Spillage / Waste Buffer <span class="val" id="v_waste">10%</span></label>
+        <input type="range" id="waste" min="0" max="30" value="10" oninput="update()">
+        <div style="font-size:0.75rem;color:#666;margin-top:2px">Abandoned drinks, spills, over-pours.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Stock on Hand</h2>
+
+      <div class="stock-row">
+        <div class="stock-label">Handles of Liquor<br><span class="stock-detail">1 handle = 1.75 L ≈ 39 shots</span></div>
+        <input type="number" id="handles" min="0" max="20" value="2" oninput="update()">
+      </div>
+      <div class="stock-row">
+        <div class="stock-label">30-Racks of Beer<br><span class="stock-detail">1 rack = 30 cans</span></div>
+        <input type="number" id="racks" min="0" max="20" value="1" oninput="update()">
+      </div>
+      <div class="stock-row">
+        <div class="stock-label">12-Packs of Seltzer<br><span class="stock-detail">e.g. White Claw, Truly</span></div>
+        <input type="number" id="seltzers" min="0" max="20" value="2" oninput="update()">
+      </div>
+      <div class="stock-row">
+        <div class="stock-label">Extra Loose Cans<br><span class="stock-detail">Any additional beers/seltzers</span></div>
+        <input type="number" id="loose" min="0" max="100" value="0" oninput="update()">
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div>
+    <div class="card" style="margin-bottom:24px">
+      <h2>Verdict</h2>
+      <div id="verdict" class="verdict-bar surplus">Loading...</div>
+
+      <div class="results-grid">
+        <div class="stat-box">
+          <div class="num" id="r_demand">-</div>
+          <div class="lbl">Drinks Needed</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="r_supply">-</div>
+          <div class="lbl">Drinks In Stock</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="r_delta">-</div>
+          <div class="lbl">Surplus / Deficit</div>
+        </div>
+      </div>
+
+      <div class="bar-container">
+        <div class="bar-label"><span>Liquor</span><span id="bl_liquor">0</span></div>
+        <div class="bar-track"><div class="bar-fill liquor" id="bf_liquor"></div></div>
+      </div>
+      <div class="bar-container">
+        <div class="bar-label"><span>Beer</span><span id="bl_beer">0</span></div>
+        <div class="bar-track"><div class="bar-fill beer" id="bf_beer"></div></div>
+      </div>
+      <div class="bar-container">
+        <div class="bar-label"><span>Seltzer</span><span id="bl_seltzer">0</span></div>
+        <div class="bar-track"><div class="bar-fill seltzer" id="bf_seltzer"></div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:24px">
+      <h2>Breakdown</h2>
+      <div class="breakdown" id="breakdown"></div>
+    </div>
+
+    <div class="card">
+      <h2>Competition Split</h2>
+      <p style="font-size:0.8rem;color:#666;margin-bottom:10px">Even split of guests between teams. Drinks needed per team:</p>
+      <div class="team-row">
+        <div class="team-box red">
+          <div class="team-name">Red Team</div>
+          <div class="team-num" id="t_red">-</div>
+          <div class="team-sub">drinks to win</div>
+        </div>
+        <div class="team-box blue">
+          <div class="team-name">Blue Team</div>
+          <div class="team-num" id="t_blue">-</div>
+          <div class="team-sub">drinks to win</div>
+        </div>
+      </div>
+      <p style="font-size:0.78rem;color:#666;margin-top:8px" id="teamNote"></p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SHOTS_PER_HANDLE = 39; // 1.75L / 44.36mL
+
+function g(id) { return document.getElementById(id); }
+function n(id) { return parseFloat(g(id).value); }
+
+function update() {
+  const guests      = n('guests');
+  const heavyPct    = n('heavyPct') / 100;
+  const heavyDrinks = n('heavyDrinks');
+  const lightDrinks = n('lightDrinks');
+  const duration    = n('duration');
+  const pregamePct  = n('pregame') / 100;
+  const nonDrinkPct = n('nonDrinkers') / 100;
+  const wastePct    = n('waste') / 100;
+
+  const handles  = n('handles');
+  const racks    = n('racks');
+  const seltzerPacks = n('seltzers');
+  const loose    = n('loose');
+
+  // Display values
+  g('v_guests').textContent      = guests;
+  g('v_heavyPct').textContent    = Math.round(heavyPct * 100) + '%';
+  g('v_heavyDrinks').textContent = heavyDrinks;
+  g('v_lightDrinks').textContent = lightDrinks;
+  g('v_duration').textContent    = duration;
+  g('v_pregame').textContent     = Math.round(pregamePct * 100) + '%';
+  g('v_nonDrinkers').textContent = Math.round(nonDrinkPct * 100) + '%';
+  g('v_waste').textContent       = Math.round(wastePct * 100) + '%';
+
+  // Demand calculation
+  const drinkers = Math.round(guests * (1 - nonDrinkPct));
+  const heavy = Math.round(drinkers * heavyPct);
+  const light = drinkers - heavy;
+
+  const durationFactor = duration / 4; // baseline 4hrs
+  const pregameReduction = 1 - (pregamePct * 0.3);
+
+  const rawDemand = (heavy * heavyDrinks + light * lightDrinks) * durationFactor * pregameReduction;
+  const totalDemand = Math.ceil(rawDemand * (1 + wastePct));
+
+  // Supply
+  const liquorDrinks  = Math.floor(handles * SHOTS_PER_HANDLE);
+  const beerDrinks    = racks * 30;
+  const seltzerDrinks = seltzerPacks * 12 + loose;
+  const totalSupply   = liquorDrinks + beerDrinks + seltzerDrinks;
+
+  const delta = totalSupply - totalDemand;
+
+  // Verdict
+  const vEl = g('verdict');
+  if (delta >= 15) {
+    vEl.className = 'verdict-bar surplus';
+    vEl.textContent = `+${delta} drinks surplus — you're covered`;
+  } else if (delta >= 0) {
+    vEl.className = 'verdict-bar tight';
+    vEl.textContent = `+${delta} drinks — cutting it close`;
+  } else {
+    vEl.className = 'verdict-bar deficit';
+    vEl.textContent = `${delta} drinks — you need more!`;
+  }
+
+  // Stats
+  g('r_demand').textContent = totalDemand;
+  g('r_supply').textContent = totalSupply;
+  g('r_delta').textContent  = (delta >= 0 ? '+' : '') + delta;
+  g('r_delta').style.color  = delta >= 0 ? '#4ade80' : '#f87171';
+
+  // Bars
+  const maxBar = Math.max(totalDemand, totalSupply, 1);
+  const setBar = (id, val) => {
+    g('bf_' + id).style.width = (val / maxBar * 100) + '%';
+    g('bl_' + id).textContent = val + ' drinks';
+  };
+  setBar('liquor', liquorDrinks);
+  setBar('beer', beerDrinks);
+  setBar('seltzer', seltzerDrinks);
+
+  // Breakdown
+  g('breakdown').innerHTML =
+    `<span>${drinkers}</span> drinkers (${heavy} heavy + ${light} light), <span>${Math.round(nonDrinkPct*100)}%</span> non-drinkers<br>` +
+    `Base demand: <span>${heavy}×${heavyDrinks} + ${light}×${lightDrinks} = ${heavy*heavyDrinks + light*lightDrinks}</span> drinks<br>` +
+    `Duration factor: <span>×${durationFactor.toFixed(2)}</span> (${duration} hrs vs 4-hr baseline)<br>` +
+    `Pregame reduction: <span>×${pregameReduction.toFixed(2)}</span> (${Math.round(pregamePct*100)}% pregamed)<br>` +
+    `Waste buffer: <span>+${Math.round(wastePct*100)}%</span><br>` +
+    `<strong>Adjusted demand: ${totalDemand} drinks</strong><br><br>` +
+    `Liquor: <span>${handles} handles = ${liquorDrinks} drinks</span><br>` +
+    `Beer: <span>${racks} × 30-rack = ${beerDrinks} drinks</span><br>` +
+    `Seltzer: <span>${seltzerPacks} × 12-pack + ${loose} loose = ${seltzerDrinks} drinks</span><br>` +
+    `<strong>Total supply: ${totalSupply} drinks</strong>`;
+
+  // Teams
+  const teamSize = Math.floor(guests / 2);
+  const oddOne = guests % 2;
+  const teamHeavy = Math.round(teamSize * heavyPct);
+  const teamLight = teamSize - teamHeavy;
+  const teamDrinks = Math.ceil((teamHeavy * heavyDrinks + teamLight * lightDrinks) * durationFactor * pregameReduction);
+  g('t_red').textContent = teamDrinks;
+  g('t_blue').textContent = teamDrinks;
+  g('teamNote').textContent = `${teamSize} per team` + (oddOne ? ` (1 swing vote floater)` : '') +
+    `. Each team needs ~${teamDrinks} drinks at current consumption rates.`;
+}
+
+update();
+</script>
+</body>
+</html>
