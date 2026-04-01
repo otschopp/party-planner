@@ -14,7 +14,48 @@
     padding: 24px;
   }
   h1 { text-align: center; font-size: 1.8rem; margin-bottom: 4px; color: #fff; }
-  .subtitle { text-align: center; color: #888; margin-bottom: 28px; font-size: 0.95rem; }
+  .subtitle { text-align: center; color: #888; margin-bottom: 20px; font-size: 0.95rem; }
+
+  /* Tabs */
+  .tab-bar {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 24px;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .tab-btn {
+    background: #1a1d27;
+    border: 1px solid #2a2d3a;
+    color: #888;
+    padding: 10px 28px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 8px 8px 0 0;
+    letter-spacing: 0.5px;
+  }
+  .tab-btn:hover { color: #ccc; background: #222530; }
+  .tab-btn.active {
+    background: #1a1d27;
+    color: #7dd3fc;
+    border-bottom-color: #1a1d27;
+    position: relative;
+  }
+  .tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #7dd3fc;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
 
   .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 1100px; margin: 0 auto; }
   @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } }
@@ -123,7 +164,7 @@
   .breakdown { font-size: 0.85rem; color: #999; line-height: 1.7; }
   .breakdown span { color: #ccc; font-weight: 600; }
 
-  .team-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid #2a2d3a; }
+  /* Team styles */
   .team-row { display: flex; gap: 12px; margin-bottom: 8px; }
   .team-box {
     flex: 1;
@@ -138,150 +179,269 @@
   .team-box.blue .team-name { color: #60a5fa; }
   .team-box .team-num { font-size: 1.3rem; font-weight: 800; margin-top: 2px; color: #fff; }
   .team-box .team-sub { font-size: 0.7rem; color: #888; }
+
+  /* Competition-specific */
+  .comp-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 1100px; margin: 0 auto; }
+  @media (max-width: 800px) { .comp-layout { grid-template-columns: 1fr; } }
+
+  .shared-inputs-summary {
+    background: #12141c;
+    border: 1px solid #2a2d3a;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    color: #888;
+    margin-bottom: 18px;
+    line-height: 1.6;
+  }
+  .shared-inputs-summary strong { color: #7dd3fc; font-weight: 700; }
+
+  .matchup-bar {
+    display: flex;
+    align-items: center;
+    height: 32px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 12px 0;
+  }
+  .matchup-bar .red-fill { background: #f8717188; height: 100%; transition: width 0.3s; }
+  .matchup-bar .blue-fill { background: #60a5fa88; height: 100%; transition: width 0.3s; }
+  .matchup-labels { display: flex; justify-content: space-between; font-size: 0.78rem; color: #999; }
 </style>
 </head>
 <body>
 
 <h1>Drink Stock Planner</h1>
-<p class="subtitle">Competition Edition &mdash; adjust sliders to plan your supply</p>
+<p class="subtitle">Plan your supply, then predict the competition</p>
 
-<div class="layout">
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('planning')">Planning</button>
+  <button class="tab-btn" onclick="switchTab('competition')">Competition</button>
+</div>
 
-  <!-- LEFT COLUMN -->
-  <div>
-    <div class="card" style="margin-bottom:24px">
-      <h2>Guest &amp; Consumption</h2>
+<!-- ===================== PLANNING TAB ===================== -->
+<div id="tab-planning" class="tab-panel active">
+  <div class="layout">
+    <!-- LEFT: Inputs -->
+    <div>
+      <div class="card" style="margin-bottom:24px">
+        <h2>Guest &amp; Consumption</h2>
+        <div class="field">
+          <label>Total Guests <span class="val" id="v_guests">49</span></label>
+          <input type="range" id="guests" min="5" max="150" value="49" oninput="update()">
+        </div>
+        <div class="field">
+          <label>Heavy Drinkers (%) <span class="val" id="v_heavyPct">50%</span></label>
+          <input type="range" id="heavyPct" min="0" max="100" value="50" oninput="update()">
+        </div>
+        <div class="field">
+          <label>Drinks / Heavy Drinker <span class="val" id="v_heavyDrinks">5</span></label>
+          <input type="range" id="heavyDrinks" min="1" max="15" value="5" oninput="update()">
+        </div>
+        <div class="field">
+          <label>Drinks / Light Drinker <span class="val" id="v_lightDrinks">1</span></label>
+          <input type="range" id="lightDrinks" min="0" max="8" value="1" oninput="update()">
+        </div>
+      </div>
 
-      <div class="field">
-        <label>Total Guests <span class="val" id="v_guests">49</span></label>
-        <input type="range" id="guests" min="5" max="150" value="49" oninput="update()">
+      <div class="card" style="margin-bottom:24px">
+        <h2>Modifiers</h2>
+        <div class="field">
+          <label>Party Duration (hrs) <span class="val" id="v_duration">4</span></label>
+          <input type="range" id="duration" min="1" max="10" step="0.5" value="4" oninput="update()">
+          <div style="font-size:0.75rem;color:#666;margin-top:2px">Baseline = 4 hrs. Longer parties scale demand up.</div>
+        </div>
+        <div class="field">
+          <label>Pregamed (%) <span class="val" id="v_pregame">0%</span></label>
+          <input type="range" id="pregame" min="0" max="100" value="0" oninput="update()">
+          <div style="font-size:0.75rem;color:#666;margin-top:2px">Pregamed guests drink ~30% less on-site.</div>
+        </div>
+        <div class="field">
+          <label>Non-Drinkers (%) <span class="val" id="v_nonDrinkers">0%</span></label>
+          <input type="range" id="nonDrinkers" min="0" max="50" value="0" oninput="update()">
+        </div>
+        <div class="field">
+          <label>Spillage / Waste Buffer <span class="val" id="v_waste">10%</span></label>
+          <input type="range" id="waste" min="0" max="30" value="10" oninput="update()">
+          <div style="font-size:0.75rem;color:#666;margin-top:2px">Abandoned drinks, spills, over-pours.</div>
+        </div>
       </div>
-      <div class="field">
-        <label>Heavy Drinkers (%) <span class="val" id="v_heavyPct">50%</span></label>
-        <input type="range" id="heavyPct" min="0" max="100" value="50" oninput="update()">
-      </div>
-      <div class="field">
-        <label>Drinks / Heavy Drinker <span class="val" id="v_heavyDrinks">5</span></label>
-        <input type="range" id="heavyDrinks" min="1" max="15" value="5" oninput="update()">
-      </div>
-      <div class="field">
-        <label>Drinks / Light Drinker <span class="val" id="v_lightDrinks">1</span></label>
-        <input type="range" id="lightDrinks" min="0" max="8" value="1" oninput="update()">
+
+      <div class="card">
+        <h2>Stock on Hand</h2>
+        <div class="stock-row">
+          <div class="stock-label">Handles of Liquor<br><span class="stock-detail">1 handle = 1.75 L ≈ 39 shots</span></div>
+          <input type="number" id="handles" min="0" max="20" value="2" oninput="update()">
+        </div>
+        <div class="stock-row">
+          <div class="stock-label">30-Racks of Beer<br><span class="stock-detail">1 rack = 30 cans</span></div>
+          <input type="number" id="racks" min="0" max="20" value="1" oninput="update()">
+        </div>
+        <div class="stock-row">
+          <div class="stock-label">12-Packs of Seltzer<br><span class="stock-detail">e.g. White Claw, Truly</span></div>
+          <input type="number" id="seltzers" min="0" max="20" value="2" oninput="update()">
+        </div>
+        <div class="stock-row">
+          <div class="stock-label">Extra Loose Cans<br><span class="stock-detail">Any additional beers/seltzers</span></div>
+          <input type="number" id="loose" min="0" max="100" value="0" oninput="update()">
+        </div>
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:24px">
-      <h2>Modifiers</h2>
+    <!-- RIGHT: Results -->
+    <div>
+      <div class="card" style="margin-bottom:24px">
+        <h2>Verdict</h2>
+        <div id="verdict" class="verdict-bar surplus">Loading...</div>
 
-      <div class="field">
-        <label>Party Duration (hrs) <span class="val" id="v_duration">4</span></label>
-        <input type="range" id="duration" min="1" max="10" step="0.5" value="4" oninput="update()">
-        <div style="font-size:0.75rem;color:#666;margin-top:2px">Baseline = 4 hrs. Longer parties scale demand up.</div>
-      </div>
-      <div class="field">
-        <label>Pregamed (%) <span class="val" id="v_pregame">0%</span></label>
-        <input type="range" id="pregame" min="0" max="100" value="0" oninput="update()">
-        <div style="font-size:0.75rem;color:#666;margin-top:2px">Pregamed guests drink ~30% less on-site.</div>
-      </div>
-      <div class="field">
-        <label>Non-Drinkers (%) <span class="val" id="v_nonDrinkers">0%</span></label>
-        <input type="range" id="nonDrinkers" min="0" max="50" value="0" oninput="update()">
-      </div>
-      <div class="field">
-        <label>Spillage / Waste Buffer <span class="val" id="v_waste">10%</span></label>
-        <input type="range" id="waste" min="0" max="30" value="10" oninput="update()">
-        <div style="font-size:0.75rem;color:#666;margin-top:2px">Abandoned drinks, spills, over-pours.</div>
-      </div>
-    </div>
+        <div class="results-grid">
+          <div class="stat-box">
+            <div class="num" id="r_demand">-</div>
+            <div class="lbl">Drinks Needed</div>
+          </div>
+          <div class="stat-box">
+            <div class="num" id="r_supply">-</div>
+            <div class="lbl">Drinks In Stock</div>
+          </div>
+          <div class="stat-box">
+            <div class="num" id="r_delta">-</div>
+            <div class="lbl">Surplus / Deficit</div>
+          </div>
+        </div>
 
-    <div class="card">
-      <h2>Stock on Hand</h2>
+        <div class="bar-container">
+          <div class="bar-label"><span>Liquor</span><span id="bl_liquor">0</span></div>
+          <div class="bar-track"><div class="bar-fill liquor" id="bf_liquor"></div></div>
+        </div>
+        <div class="bar-container">
+          <div class="bar-label"><span>Beer</span><span id="bl_beer">0</span></div>
+          <div class="bar-track"><div class="bar-fill beer" id="bf_beer"></div></div>
+        </div>
+        <div class="bar-container">
+          <div class="bar-label"><span>Seltzer</span><span id="bl_seltzer">0</span></div>
+          <div class="bar-track"><div class="bar-fill seltzer" id="bf_seltzer"></div></div>
+        </div>
+      </div>
 
-      <div class="stock-row">
-        <div class="stock-label">Handles of Liquor<br><span class="stock-detail">1 handle = 1.75 L ≈ 39 shots</span></div>
-        <input type="number" id="handles" min="0" max="20" value="2" oninput="update()">
-      </div>
-      <div class="stock-row">
-        <div class="stock-label">30-Racks of Beer<br><span class="stock-detail">1 rack = 30 cans</span></div>
-        <input type="number" id="racks" min="0" max="20" value="1" oninput="update()">
-      </div>
-      <div class="stock-row">
-        <div class="stock-label">12-Packs of Seltzer<br><span class="stock-detail">e.g. White Claw, Truly</span></div>
-        <input type="number" id="seltzers" min="0" max="20" value="2" oninput="update()">
-      </div>
-      <div class="stock-row">
-        <div class="stock-label">Extra Loose Cans<br><span class="stock-detail">Any additional beers/seltzers</span></div>
-        <input type="number" id="loose" min="0" max="100" value="0" oninput="update()">
+      <div class="card">
+        <h2>Breakdown</h2>
+        <div class="breakdown" id="breakdown"></div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- RIGHT COLUMN -->
-  <div>
-    <div class="card" style="margin-bottom:24px">
-      <h2>Verdict</h2>
-      <div id="verdict" class="verdict-bar surplus">Loading...</div>
+<!-- ===================== COMPETITION TAB ===================== -->
+<div id="tab-competition" class="tab-panel">
+  <div class="comp-layout">
+    <!-- LEFT: Team Profiles -->
+    <div>
+      <div class="shared-inputs-summary" id="sharedSummary"></div>
 
-      <div class="results-grid">
-        <div class="stat-box">
-          <div class="num" id="r_demand">-</div>
-          <div class="lbl">Drinks Needed</div>
+      <div class="card" style="margin-bottom:24px">
+        <h2>Red Team Profile</h2>
+        <div class="field">
+          <label>Heavy Drinkers (%) <span class="val" id="v_redHeavy">50%</span></label>
+          <input type="range" id="redHeavy" min="0" max="100" value="50" oninput="update()" style="accent-color:#f87171">
         </div>
-        <div class="stat-box">
-          <div class="num" id="r_supply">-</div>
-          <div class="lbl">Drinks In Stock</div>
+        <div class="field">
+          <label>Drinks / Heavy Drinker <span class="val" id="v_redHeavyD">5</span></label>
+          <input type="range" id="redHeavyD" min="1" max="15" value="5" oninput="update()" style="accent-color:#f87171">
         </div>
-        <div class="stat-box">
-          <div class="num" id="r_delta">-</div>
-          <div class="lbl">Surplus / Deficit</div>
+        <div class="field">
+          <label>Drinks / Light Drinker <span class="val" id="v_redLightD">1</span></label>
+          <input type="range" id="redLightD" min="0" max="8" value="1" oninput="update()" style="accent-color:#f87171">
         </div>
       </div>
 
-      <div class="bar-container">
-        <div class="bar-label"><span>Liquor</span><span id="bl_liquor">0</span></div>
-        <div class="bar-track"><div class="bar-fill liquor" id="bf_liquor"></div></div>
+      <div class="card" style="margin-bottom:24px">
+        <h2>Blue Team Profile</h2>
+        <div class="field">
+          <label>Heavy Drinkers (%) <span class="val" id="v_blueHeavy">50%</span></label>
+          <input type="range" id="blueHeavy" min="0" max="100" value="50" oninput="update()" style="accent-color:#60a5fa">
+        </div>
+        <div class="field">
+          <label>Drinks / Heavy Drinker <span class="val" id="v_blueHeavyD">5</span></label>
+          <input type="range" id="blueHeavyD" min="1" max="15" value="5" oninput="update()" style="accent-color:#60a5fa">
+        </div>
+        <div class="field">
+          <label>Drinks / Light Drinker <span class="val" id="v_blueLightD">1</span></label>
+          <input type="range" id="blueLightD" min="0" max="8" value="1" oninput="update()" style="accent-color:#60a5fa">
+        </div>
       </div>
-      <div class="bar-container">
-        <div class="bar-label"><span>Beer</span><span id="bl_beer">0</span></div>
-        <div class="bar-track"><div class="bar-fill beer" id="bf_beer"></div></div>
-      </div>
-      <div class="bar-container">
-        <div class="bar-label"><span>Seltzer</span><span id="bl_seltzer">0</span></div>
-        <div class="bar-track"><div class="bar-fill seltzer" id="bf_seltzer"></div></div>
+
+      <div style="text-align:center">
+        <button onclick="syncTeams()" style="background:#2a2d3a;color:#aaa;border:1px solid #3a3d4a;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:0.85rem;">Reset teams to global defaults</button>
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:24px">
-      <h2>Breakdown</h2>
-      <div class="breakdown" id="breakdown"></div>
-    </div>
+    <!-- RIGHT: Prediction -->
+    <div>
+      <div class="card" style="margin-bottom:24px">
+        <h2>Predicted Outcome</h2>
+        <div id="compVerdict" class="verdict-bar surplus" style="font-size:1rem">Loading...</div>
 
-    <div class="card">
-      <h2>Competition Split</h2>
-      <p style="font-size:0.8rem;color:#666;margin-bottom:10px">Even split of guests between teams. Drinks needed per team:</p>
-      <div class="team-row">
-        <div class="team-box red">
-          <div class="team-name">Red Team</div>
-          <div class="team-num" id="t_red">-</div>
-          <div class="team-sub">drinks to win</div>
+        <div class="team-row">
+          <div class="team-box red">
+            <div class="team-name">Red Team</div>
+            <div class="team-num" id="t_red">-</div>
+            <div class="team-sub" id="t_red_sub">drinks consumed</div>
+          </div>
+          <div class="team-box blue">
+            <div class="team-name">Blue Team</div>
+            <div class="team-num" id="t_blue">-</div>
+            <div class="team-sub" id="t_blue_sub">drinks consumed</div>
+          </div>
         </div>
-        <div class="team-box blue">
-          <div class="team-name">Blue Team</div>
-          <div class="team-num" id="t_blue">-</div>
-          <div class="team-sub">drinks to win</div>
+
+        <!-- Matchup bar -->
+        <div class="matchup-labels">
+          <span id="ml_red">Red 50%</span>
+          <span id="ml_blue">Blue 50%</span>
+        </div>
+        <div class="matchup-bar">
+          <div class="red-fill" id="mb_red" style="width:50%"></div>
+          <div class="blue-fill" id="mb_blue" style="width:50%"></div>
         </div>
       </div>
-      <p style="font-size:0.78rem;color:#666;margin-top:8px" id="teamNote"></p>
+
+      <div class="card" style="margin-bottom:24px">
+        <h2>Rate Breakdown</h2>
+        <div id="teamPrediction" style="font-size:0.85rem;line-height:1.7"></div>
+      </div>
+
+      <div class="card">
+        <h2>Supply Impact</h2>
+        <div id="supplyImpact" style="font-size:0.85rem;color:#999;line-height:1.7"></div>
+      </div>
     </div>
   </div>
-
 </div>
 
 <script>
-const SHOTS_PER_HANDLE = 39; // 1.75L / 44.36mL
+const SHOTS_PER_HANDLE = 39;
 
 function g(id) { return document.getElementById(id); }
 function n(id) { return parseFloat(g(id).value); }
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  g('tab-' + tab).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.textContent.toLowerCase() === tab) b.classList.add('active');
+  });
+}
+
+function syncTeams() {
+  g('redHeavy').value  = g('heavyPct').value;
+  g('redHeavyD').value = g('heavyDrinks').value;
+  g('redLightD').value = g('lightDrinks').value;
+  g('blueHeavy').value  = g('heavyPct').value;
+  g('blueHeavyD').value = g('heavyDrinks').value;
+  g('blueLightD').value = g('lightDrinks').value;
+  update();
+}
 
 function update() {
   const guests      = n('guests');
@@ -313,7 +473,7 @@ function update() {
   const heavy = Math.round(drinkers * heavyPct);
   const light = drinkers - heavy;
 
-  const durationFactor = duration / 4; // baseline 4hrs
+  const durationFactor = duration / 4;
   const pregameReduction = 1 - (pregamePct * 0.3);
 
   const rawDemand = (heavy * heavyDrinks + light * lightDrinks) * durationFactor * pregameReduction;
@@ -327,7 +487,7 @@ function update() {
 
   const delta = totalSupply - totalDemand;
 
-  // Verdict
+  // ─── PLANNING TAB ───
   const vEl = g('verdict');
   if (delta >= 15) {
     vEl.className = 'verdict-bar surplus';
@@ -340,13 +500,11 @@ function update() {
     vEl.textContent = `${delta} drinks — you need more!`;
   }
 
-  // Stats
   g('r_demand').textContent = totalDemand;
   g('r_supply').textContent = totalSupply;
   g('r_delta').textContent  = (delta >= 0 ? '+' : '') + delta;
   g('r_delta').style.color  = delta >= 0 ? '#4ade80' : '#f87171';
 
-  // Bars
   const maxBar = Math.max(totalDemand, totalSupply, 1);
   const setBar = (id, val) => {
     g('bf_' + id).style.width = (val / maxBar * 100) + '%';
@@ -356,29 +514,179 @@ function update() {
   setBar('beer', beerDrinks);
   setBar('seltzer', seltzerDrinks);
 
-  // Breakdown
   g('breakdown').innerHTML =
     `<span>${drinkers}</span> drinkers (${heavy} heavy + ${light} light), <span>${Math.round(nonDrinkPct*100)}%</span> non-drinkers<br>` +
-    `Base demand: <span>${heavy}×${heavyDrinks} + ${light}×${lightDrinks} = ${heavy*heavyDrinks + light*lightDrinks}</span> drinks<br>` +
-    `Duration factor: <span>×${durationFactor.toFixed(2)}</span> (${duration} hrs vs 4-hr baseline)<br>` +
-    `Pregame reduction: <span>×${pregameReduction.toFixed(2)}</span> (${Math.round(pregamePct*100)}% pregamed)<br>` +
+    `Base demand: <span>${heavy}&times;${heavyDrinks} + ${light}&times;${lightDrinks} = ${heavy*heavyDrinks + light*lightDrinks}</span> drinks<br>` +
+    `Duration factor: <span>&times;${durationFactor.toFixed(2)}</span> (${duration} hrs vs 4-hr baseline)<br>` +
+    `Pregame reduction: <span>&times;${pregameReduction.toFixed(2)}</span> (${Math.round(pregamePct*100)}% pregamed)<br>` +
     `Waste buffer: <span>+${Math.round(wastePct*100)}%</span><br>` +
     `<strong>Adjusted demand: ${totalDemand} drinks</strong><br><br>` +
     `Liquor: <span>${handles} handles = ${liquorDrinks} drinks</span><br>` +
-    `Beer: <span>${racks} × 30-rack = ${beerDrinks} drinks</span><br>` +
-    `Seltzer: <span>${seltzerPacks} × 12-pack + ${loose} loose = ${seltzerDrinks} drinks</span><br>` +
+    `Beer: <span>${racks} &times; 30-rack = ${beerDrinks} drinks</span><br>` +
+    `Seltzer: <span>${seltzerPacks} &times; 12-pack + ${loose} loose = ${seltzerDrinks} drinks</span><br>` +
     `<strong>Total supply: ${totalSupply} drinks</strong>`;
 
-  // Teams
-  const teamSize = Math.floor(guests / 2);
-  const oddOne = guests % 2;
-  const teamHeavy = Math.round(teamSize * heavyPct);
-  const teamLight = teamSize - teamHeavy;
-  const teamDrinks = Math.ceil((teamHeavy * heavyDrinks + teamLight * lightDrinks) * durationFactor * pregameReduction);
-  g('t_red').textContent = teamDrinks;
-  g('t_blue').textContent = teamDrinks;
-  g('teamNote').textContent = `${teamSize} per team` + (oddOne ? ` (1 swing vote floater)` : '') +
-    `. Each team needs ~${teamDrinks} drinks at current consumption rates.`;
+  // ─── COMPETITION TAB ───
+
+  // Shared inputs summary
+  g('sharedSummary').innerHTML =
+    `From Planning: <strong>${guests}</strong> guests, <strong>${duration}</strong> hrs, ` +
+    `<strong>${totalSupply}</strong> drinks in stock, ` +
+    `<strong>${Math.round(wastePct*100)}%</strong> waste, ` +
+    `<strong>${Math.round(pregamePct*100)}%</strong> pregamed, ` +
+    `<strong>${Math.round(nonDrinkPct*100)}%</strong> non-drinkers`;
+
+  const teamSize = Math.floor(drinkers / 2);
+  const oddOne = drinkers % 2;
+
+  const redHeavyPct  = n('redHeavy') / 100;
+  const redHeavyD    = n('redHeavyD');
+  const redLightD    = n('redLightD');
+  const blueHeavyPct = n('blueHeavy') / 100;
+  const blueHeavyD   = n('blueHeavyD');
+  const blueLightD   = n('blueLightD');
+
+  g('v_redHeavy').textContent  = Math.round(redHeavyPct * 100) + '%';
+  g('v_redHeavyD').textContent = redHeavyD;
+  g('v_redLightD').textContent = redLightD;
+  g('v_blueHeavy').textContent  = Math.round(blueHeavyPct * 100) + '%';
+  g('v_blueHeavyD').textContent = blueHeavyD;
+  g('v_blueLightD').textContent = blueLightD;
+
+  // Build rate-based groups
+  const redH  = Math.round(teamSize * redHeavyPct);
+  const redL  = teamSize - redH;
+  const blueH = Math.round(teamSize * blueHeavyPct);
+  const blueL = teamSize - blueH;
+
+  const groups = [
+    { team: 'red',  type: 'heavy', count: redH,  rate: (redHeavyD / 4) * pregameReduction },
+    { team: 'red',  type: 'light', count: redL,  rate: (redLightD / 4) * pregameReduction },
+    { team: 'blue', type: 'heavy', count: blueH, rate: (blueHeavyD / 4) * pregameReduction },
+    { team: 'blue', type: 'light', count: blueL, rate: (blueLightD / 4) * pregameReduction },
+  ];
+
+  const totalRate = groups.reduce((s, gr) => s + gr.count * gr.rate, 0);
+  const usableSupply = Math.floor(totalSupply / (1 + wastePct));
+
+  // Unconstrained wants
+  const redWant  = Math.ceil((redH * redHeavyD + redL * redLightD) * durationFactor * pregameReduction);
+  const blueWant = Math.ceil((blueH * blueHeavyD + blueL * blueLightD) * durationFactor * pregameReduction);
+  const totalWant = redWant + blueWant;
+
+  // Rate-based distribution
+  let redActual, blueActual, dryAtHr;
+  let groupActuals = {};
+
+  if (usableSupply >= totalWant) {
+    redActual  = redWant;
+    blueActual = blueWant;
+    dryAtHr = null;
+    for (const gr of groups) {
+      groupActuals[gr.team + '_' + gr.type] = gr.count > 0
+        ? (gr.type === 'heavy'
+          ? (gr.team === 'red' ? redHeavyD : blueHeavyD)
+          : (gr.team === 'red' ? redLightD : blueLightD)) * durationFactor * pregameReduction
+        : 0;
+    }
+  } else {
+    dryAtHr = totalRate > 0 ? Math.min(usableSupply / totalRate, duration) : duration;
+
+    redActual = 0;
+    blueActual = 0;
+    for (const gr of groups) {
+      const groupGets = Math.round(gr.count * gr.rate * dryAtHr);
+      const perPerson = gr.count > 0 ? gr.rate * dryAtHr : 0;
+      groupActuals[gr.team + '_' + gr.type] = perPerson;
+      if (gr.team === 'red') redActual += groupGets;
+      else blueActual += groupGets;
+    }
+
+    const actualTotal = redActual + blueActual;
+    if (actualTotal > usableSupply) {
+      const scale = usableSupply / actualTotal;
+      redActual  = Math.round(redActual * scale);
+      blueActual = usableSupply - redActual;
+      for (const k in groupActuals) groupActuals[k] *= scale;
+    }
+  }
+
+  // Team numbers
+  g('t_red').textContent  = redActual;
+  g('t_blue').textContent = blueActual;
+  g('t_red_sub').textContent  = redActual < redWant ? `of ${redWant} wanted` : 'drinks consumed';
+  g('t_blue_sub').textContent = blueActual < blueWant ? `of ${blueWant} wanted` : 'drinks consumed';
+
+  // Matchup bar
+  const totalActual = redActual + blueActual || 1;
+  const redPct = Math.round(redActual / totalActual * 100);
+  const bluePct = 100 - redPct;
+  g('mb_red').style.width  = redPct + '%';
+  g('mb_blue').style.width = bluePct + '%';
+  g('ml_red').textContent  = `Red ${redPct}%`;
+  g('ml_blue').textContent = `Blue ${bluePct}%`;
+
+  // Competition verdict
+  const cv = g('compVerdict');
+  const diff = Math.abs(redActual - blueActual);
+  if (diff === 0) {
+    cv.className = 'verdict-bar tight';
+    cv.textContent = 'Dead even — coin-flip territory';
+  } else {
+    const winner = redActual > blueActual ? 'Red' : 'Blue';
+    const pctEdge = Math.round(diff / (Math.min(redActual, blueActual) || 1) * 100);
+    if (pctEdge <= 10) {
+      cv.className = 'verdict-bar tight';
+      cv.textContent = `${winner} Team edges ahead by ${diff} drinks (${pctEdge}%) — close call`;
+    } else {
+      cv.className = winner === 'Red' ? 'verdict-bar deficit' : 'verdict-bar surplus';
+      cv.textContent = `${winner} Team leads by ${diff} drinks (${pctEdge}%)`;
+    }
+  }
+
+  // Rate breakdown
+  const rha = groupActuals['red_heavy'] || 0;
+  const rla = groupActuals['red_light'] || 0;
+  const bha = groupActuals['blue_heavy'] || 0;
+  const bla = groupActuals['blue_light'] || 0;
+
+  let rateHTML = '';
+  rateHTML += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">`;
+  rateHTML += `<div>`;
+  rateHTML += `<div style="color:#f87171;font-weight:700;margin-bottom:6px">Red Team</div>`;
+  rateHTML += `${redH} heavy &times; <strong>${rha.toFixed(1)}</strong> drinks/ea<br>`;
+  rateHTML += `${redL} light &times; <strong>${rla.toFixed(1)}</strong> drinks/ea<br>`;
+  rateHTML += `<span style="color:#f87171">Rate: ${(groups[0].count * groups[0].rate + groups[1].count * groups[1].rate).toFixed(1)} drinks/hr</span>`;
+  rateHTML += `</div>`;
+  rateHTML += `<div>`;
+  rateHTML += `<div style="color:#60a5fa;font-weight:700;margin-bottom:6px">Blue Team</div>`;
+  rateHTML += `${blueH} heavy &times; <strong>${bha.toFixed(1)}</strong> drinks/ea<br>`;
+  rateHTML += `${blueL} light &times; <strong>${bla.toFixed(1)}</strong> drinks/ea<br>`;
+  rateHTML += `<span style="color:#60a5fa">Rate: ${(groups[2].count * groups[2].rate + groups[3].count * groups[3].rate).toFixed(1)} drinks/hr</span>`;
+  rateHTML += `</div>`;
+  rateHTML += `</div>`;
+
+  g('teamPrediction').innerHTML = rateHTML;
+
+  // Supply impact
+  let impactHTML = '';
+  if (dryAtHr !== null) {
+    const timeLeft = duration - dryAtHr;
+    impactHTML += `<div style="color:#f87171;font-weight:600;margin-bottom:8px">Supply runs out at ${dryAtHr.toFixed(1)} hrs — ${timeLeft.toFixed(1)} hrs with nothing left</div>`;
+    impactHTML += `Heavy drinkers consume at <strong>${((groups[0].rate + groups[2].rate) / 2).toFixed(2)}</strong> drinks/hr avg, `;
+    impactHTML += `claiming <strong>${Math.round((redH * rha + blueH * bha) / (totalActual || 1) * 100)}%</strong> of all drinks<br>`;
+    impactHTML += `Light drinkers get squeezed to <strong>${((rla + bla) / 2).toFixed(1)}</strong> drinks/person avg`;
+    if (redActual < redWant || blueActual < blueWant) {
+      impactHTML += `<br><br>`;
+      if (redActual < redWant) impactHTML += `Red shortfall: <span style="color:#f87171">${redWant - redActual} drinks unmet</span><br>`;
+      if (blueActual < blueWant) impactHTML += `Blue shortfall: <span style="color:#60a5fa">${blueWant - blueActual} drinks unmet</span>`;
+    }
+  } else {
+    impactHTML += `<span style="color:#4ade80;font-weight:600">Supply covers all demand</span> — everyone gets what they want<br>`;
+    impactHTML += `${usableSupply - totalWant} usable drinks left over after both teams are satisfied`;
+  }
+
+  g('supplyImpact').innerHTML = impactHTML;
 }
 
 update();
